@@ -19,6 +19,8 @@ def main():
     2: "Motor trabajando"
     }
 
+    # nombre del campo: resultado_ia en la tabla encabezado
+
     # Get the database head table
 
     query = "select * from pulsos_iot_vibration_encabezado;"
@@ -71,8 +73,20 @@ def main():
 
     print(labels[y_pred])
     print(X_rms)
-    plt.plot(X_sampled[0])
-    plt.show()
+    # plt.plot(X_sampled[0])
+    # plt.show()
+
+    # Hacer la insersión del resultado en la base de datos:
+
+
+    query = f"""
+    UPDATE pulsos_iot_vibration_encabezado
+    SET resultado_ia = {y_pred},
+    WHERE cod_pulso = {minuto};
+    """
+
+    execute_query(conn, query)
+
 
 if __name__ == "__main__":
     main()
