@@ -14,13 +14,10 @@ def main():
     conn = create_server_connection('localhost', 'admin', 'password', 'Solocauchos')
 
     labels = {
-    1: 'Sensor desconectado',
-    2: 'Standby con interferencia',
-    3: 'Standby SIN interferencia',
-    4: 'Trabajando',
-    5: 'Trabajando + Standby',
-    6: 'Trabajando + Anomalia',
-    7: 'Standby + Anomalia'}
+    0: "Sensor Desconectado",
+    1: "Motor en Standby",
+    2: "Motor trabajando"
+    }
 
     # Get the database head table
 
