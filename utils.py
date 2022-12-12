@@ -91,7 +91,7 @@ def get_signals(minuto, conn):
 
     return signals
 
-def feature_extraction(X_raw):
+def feature_extraction_mfcc(X_raw):
     x_i = []
     for i in range(X_raw.shape[2]):
         X_mfcc = mfcc(X_raw[0,:,i], n_mfcc = 5)
@@ -101,3 +101,14 @@ def feature_extraction(X_raw):
     x_i = np.array(x_i).reshape(-1)
     x_i = np.expand_dims(x_i, axis = 0)
     return x_i
+
+def feature_extraction_fft(X_raw):
+    X_fft = np.fft.fft(X_raw, axis = 1)
+
+    FFT_mean = np.mean(np.real(X_fft), axis = 1)
+    FFT_std = np.std(np.real(X_fft), axis = 1)
+    FFT_median = np.median(np.real(X_fft), axis = 1)
+    FFT_min = np.min(np.real(X_fft), axis = 1)
+    FFT_max = np.max(np.real(X_fft), axis = 1)
+
+    return np.concatenate([FFT_mean, FFT_std, FFT_median, FFT_min, FFT_max], axis = 1)

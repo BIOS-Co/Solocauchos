@@ -26,7 +26,7 @@ def main():
     # Load the models
 
     model_state = pickle.load(open('modelo_estado.sav', 'rb'))
-    model_standby = pickle.load(open('modelo_standby.sav', 'rb'))
+    model_standby = pickle.load(open('anomalia_standby_fft.sav', 'rb'))
     model_trabajando = pickle.load(open('modelo_trabajando.sav', 'rb'))
 
 
@@ -41,7 +41,7 @@ def main():
 
         # Do the query to obtain the latest signal
 
-        minuto = encabezado['cod_pulso'].iloc[-1] - 1
+        minuto = encabezado['cod_pulso'].iloc[-1] - 10
 
         signals = get_signals(minuto, conn)
 
@@ -64,13 +64,13 @@ def main():
         
         elif state_pred == 1:
             print("Signals shape: ", signals.shape)
-            X_mfcc = feature_extraction(signals)
+            X_mfcc = feature_extraction_fft(signals)
             print("Features shape: ", X_mfcc.shape)
             X_mfcc = StandardScaler().fit_transform(X_mfcc)
             anomaly_pred = model_standby.predict(X_mfcc)[0]
 
         elif state_pred == 2:
-            X_mfcc = feature_extraction(signals)
+            X_mfcc = feature_extraction_fft(signals)
             print("Features shape: ", X_mfcc.shape)
             X_mfcc = StandardScaler().fit_transform(X_mfcc)
             anomaly_pred = model_trabajando.predict(X_mfcc)[0]

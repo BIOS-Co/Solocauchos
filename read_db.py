@@ -15,7 +15,8 @@ from utils import *
 from docopt import docopt
 from docopt import docopt
 import os
-
+from scipy.signal import resample
+import pickle
 doc = '''
 Usage:
     read_db.py <host_name> <user_name> <user_password> <db_name> <save_path>
@@ -60,31 +61,48 @@ def main(host_name, user_name, user_password, db_name, save_path):
 
     total_length = len(w)
 
+    # Load the model
+
+    model = pickle.load(open('modelo_estado.sav', 'rb'))
+
     for minuto in encabezado['cod_pulso']:
         
         print(f"Reading minute {minuto}")
-        data = {}
-        for sensor in sensores:
-            query = f"select * from pulsos_iot_vibration_{sensor} where cod_pulso_encabezado = {minuto};"
+        signals = np.zeros((12000, 4))
+
+        try:
+            for i, sensor in enumerate(sensores):
+                query = f"select * from pulsos_iot_vibration_{sensor} where cod_pulso_encabezado = {minuto};"
+
+                x = np.array(create_df(conn, query, col_names)['ciclo'].tolist())
+                x = resample(x, 12000)
+
+                signals[:, i] = x
             
-            x = np.array(create_df(conn,query, col_names)['ciclo'].tolist())
-            x = np.pad(x, (0,total_length-x.shape[0]), 'constant', constant_values = 0)
+                # data[sensor] = x
+            
+            df = pd.DataFrame(signals, columns=sensores)
+
+            print(df.shape)
+            label = encabezado['cod_etiqueta'].iloc[minuto-1]
+
+            # In case of not having the label, label it using the model
+
+            if label == None:
+                X_rms = np.sqrt(np.mean(signals**2, axis=0))
+                X_rms = np.expand_dims(X_rms, axis = 0)
+                label = model.predict(X_rms)[0]
 
 
-            data[sensor] = x
-        
-        df = pd.DataFrame(data, columns=sensores)
+            fecha = encabezado['fecha_cliente'].iloc[minuto-1]
+            full_path = os.path.join(save_path,str(label),fecha.strftime("%m-%d-%Y %H:%M:%S")+'.csv')
+            df.to_csv(full_path)
+            
+            print(f"Label: {label}")
+            print(f"Saved fecha {fecha}")
 
-        print(df.shape)
-        label = encabezado['cod_etiqueta'].iloc[minuto-1]
-        fecha = encabezado['fecha_cliente'].iloc[minuto-1]
-        full_path = os.path.join(save_path,str(label),fecha.strftime("%m-%d-%Y %H:%M:%S")+'.csv')
-        df.to_csv(full_path)
-        
-        print(f"Label: {label}")
-        print(f"Saved fecha {fecha}")
-
-
+        except:
+            print("Error, passing")
 
 
 if __name__ == '__main__':
