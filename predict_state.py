@@ -34,21 +34,21 @@ def main():
     sensores = ['w', 'x', 'y', 'z']
     col_names = get_col_names(conn, 'pulsos_iot_vibration_w')
 
-    minuto = encabezado['cod_pulso'].iloc[-1]
+    minuto = encabezado['cod_pulso'].iloc[-1] -10
     total_length = 432000
     data = {}
-    for sensor in sensores:
+    signals = np.zeros((1,12000,4))
+
+    for i,sensor in enumerate(sensores):
         query = f"select * from pulsos_iot_vibration_{sensor} where cod_pulso_encabezado = {minuto};"
         
         x = np.array(create_df(conn, query, col_names)['ciclo'].tolist())
-        x = np.pad(x, (0,total_length-x.shape[0]), 'constant', constant_values = 0)
+        x = resample(x, 12000)
 
 
-        data[sensor] = x
+        signals[0,:,i] = x
+
     
-    df = pd.DataFrame(data, columns=sensores)
-
-    signals = np.array(df)
 
     # Load the model
 
@@ -58,25 +58,20 @@ def main():
 
     # Preprocessing:
 
-    # Sampling:
+    X_rms = np.sqrt(np.mean(signals**2, axis = 1))
 
-    X_sampled = np.zeros((1,12000, signals.shape[1]))
-
-    X_sampled[0,:,0] = resample(signals[:,0], 12000)
-    X_sampled[0,:,1] = signals[:12000,1]
-    X_sampled[0,:,2] = signals[:12000,2]
-    X_sampled[0,:,3] = signals[:12000,3]
-
-    X_rms = np.sqrt(np.mean(X_sampled**2, axis = 1))
+    # Prediction:
 
     y_pred = model.predict(X_rms)[0]
 
+    # Display results:
+
     print(labels[y_pred])
     print(X_rms)
-    # plt.plot(X_sampled[0])
-    # plt.show()
+    plt.plot(signals[0])
+    plt.show()
 
-    # Hacer la insersión del resultado en la base de datos:
+    # Insert the prediction result in the database:
 
 
     query = f"""
@@ -85,8 +80,8 @@ def main():
     WHERE cod_pulso = {minuto};
     """
 
-    execute_query(conn, query)
-
+    # execute_query(conn, query)
+    # print(f"Pulso analizado: {minuto}")
 
 if __name__ == "__main__":
     main()
