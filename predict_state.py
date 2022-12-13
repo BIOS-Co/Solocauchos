@@ -54,7 +54,7 @@ def main():
 
     # Preprocessing:
 
-    X_rms = np.sqrt(np.mean(signals**2, axis=1))
+    X_rms = np.sqrt(np.mean(signals[:,:100,:]**2, axis=1))
 
     # Prediction:
 

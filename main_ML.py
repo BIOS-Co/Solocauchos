@@ -41,7 +41,7 @@ def main():
 
         # Do the query to obtain the latest signal
 
-        minuto = encabezado['cod_pulso'].iloc[-1] - 10
+        minuto = encabezado['cod_pulso'].iloc[-1] - 1
 
         signals = get_signals(minuto, conn)
 
@@ -50,7 +50,7 @@ def main():
 
         # Preprocessing:
 
-        X_rms = np.sqrt(np.mean(signals**2, axis = 1))
+        X_rms = np.sqrt(np.mean(signals[:,:100,:]**2, axis = 1))
 
         # Prediction:
 
@@ -85,8 +85,8 @@ def main():
         else:
             print("Señal con anomalía")
        
-        plt.plot(signals[0])
-        plt.show()
+        # plt.plot(signals[0])
+        # plt.show()
 
         # Insert the prediction result in the database:
 
